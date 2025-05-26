@@ -4,32 +4,59 @@ getRUV = function(dat, assay, k = 5, rep, negCtl = NULL, newAssay = NULL, replic
     if (is.null(negCtl)) {
         negCtl = seq(nrow(dat))
     }
+    # browser()
     if (is.null(replicate_mat)) {
-        if (rep == "pool") {
+        if (rep == "pool") { # Hardwired colname not documented
             replication = dat$sample_name
             replication[which(dat[[rep]])] = "Pool"
             replicate_mat = replicate.matrix(replication)
-        } else if (rep == "batch_replicate") {
+        } else if (rep == "batch_replicate") { # Hardwired colname not documented
             replication = dat$sample_name
+            ## It looks like a triple asterisk is hardwired into batch replicates
             replication = gsub("\\*{3}", "",replication)
 
             replication[dat$pool] = paste("Pool", 1:sum(dat$pool))
             replicate_mat = replicate.matrix(replication)
 
-        } else if (rep == "short_replicate") {
-            replication = dat$sample_name
+        } else if (rep == "short_replicate") { # Hardwired colname not documented
+
+            ## This column is not documented as being required
+            ## Intuitively, it should be the same as colnames(dat)
+            ## but in the example data, it is not
+            replication = dat$sample_name # Hardwired colname not documented
+
+            ## This assumes that all replicate sample names will end with '*'
+            ## Perhaps this is standard for metabolomics data, but it's not
+            ## documented anywhere and most definitely not how we've done it
             replicates = dat$sample_name[dat$short_replicate]
 
-            replicates = gsub("\\*", "", replicates[which(grepl("^[0-9]+\\*$", replicates))])
+            ## There is no need to restrict this to samples ending in '*'
+            ## Wouldn't just calling the logical vector give you the replicates?
+            ## Any replicates not labelled in this fashion will also be dropped
+            ## at this point, which is a very clear bug. My modified version
+            ## replaces the original here. I should also note this simply turns
+            ## them into the values from the column 'Sample' in the example data
+            ## which seems really convoluted. Need a conversation with Jean's
+            ## team to see if this is a standard format. This also enforces a
+            ## strict requirement for replicates to end in a numeric followed by
+            ## a single asterisk, which is not documented anywhere.
+            # replicates = gsub("\\*", "", replicates[which(grepl("^[0-9]+\\*$", replicates))])
+            ## Immediate bugfix. Otherwise a stopifnot(length(replicates)) should go here
+            replicates = gsub("\\*", "", replicates)
 
+            ## This simply forms a regex allowing for 0 or 1 asterisks after
+            ## each sample name. Is that limitation of 1 really required?
+            ## It seems that this would also capture >1 by the nature of regex
             replicates = paste("(^", paste(replicates, collapse = "\\*{0,1}$)|(^"), "\\*{0,1}$)", sep = "")
+
+            ## Again, this simply removes any single asterisks. There's really
+            ## no need to subset these samples, or is there?
             replication[which(grepl(replicates, replication))] = gsub("\\*", "", replication[which(grepl(replicates, replication))])
 
-            # replicates = dat$sample_name[dat$short_replicate]
-            # replicates = paste("(^", paste(replicates, collapse = "\\*{1}$)|(^"), "\\**$)", sep = "")
-            # replication[which(grepl(replicates, replication))] = gsub("\\*", "", replication[which(grepl(replicates, replication))])
-
-
+            ## This returns a design matrix for all replicates where rows
+            ## match the samples in dat, but the columns will be ordered
+            ## based on the coercion of sample names to a factor, i.e.
+            ## naive alpha-numeric
             replicate_mat = replicate.matrix(replication)
 
         }
