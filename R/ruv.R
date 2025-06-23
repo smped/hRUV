@@ -1,10 +1,12 @@
 #' @importFrom SummarizedExperiment assay
 getRUV = function(dat, assay, k = 5, rep, negCtl = NULL, newAssay = NULL, replicate_mat = NULL) {
     # Negative control metabolites
-    if (is.null(negCtl)) {
-        negCtl = seq(nrow(dat))
-    }
-    # browser()
+    # if (is.null(negCtl)) {
+    #     ## I'm not sure why this is originally set as an integer vector here
+    #     ## then reset as a logical vector in the call below to RUVIII
+    #     negCtl = seq(nrow(dat))
+    # }
+    negCtl <- .negctl_to_logical(negCtl, dat) # This is now logical not an integer
     if (is.null(replicate_mat)) {
         if (rep == "pool") { # Hardwired colname not documented
             replication = dat$sample_name
@@ -93,6 +95,26 @@ getRUV = function(dat, assay, k = 5, rep, negCtl = NULL, newAssay = NULL, replic
     dat
 }
 
+## Simple helper function to ensure that negative controls are handled correctly
+## Will parse logical, integer and character vectors, returning a logical
+## Currently, an initial integer vector is created if not specified, with
+## logical or character vectors not handled correctly at all and causing errors
+.negctl_to_logical <- function(negCtl, dat){
+    n_ids <- nrow(dat)
+    ## If NULL, all IDs will be used
+    if (is.null(negCtl)) out <- rep(TRUE, n_ids)
+    if (is.numeric(negCtl)) {
+        if (max(negCtl) > n_ids)
+            stop("IDs outside the range of the data cannot be specified")
+        out <- rep(FALSE, n_ids)
+        out[as.integer(negCtl)] <- TRUE
+    }
+    if (is.character(negCtl)) {
+        out <- rownames(dat) %in% negCtl
+        if (sum(out) == 0)  stop("No negCtrl IDs found in the data")
+    }
+    out
+}
 
 #' @title Hierarchical RUV
 #'
@@ -104,7 +126,7 @@ getRUV = function(dat, assay, k = 5, rep, negCtl = NULL, newAssay = NULL, replic
 #'  data in the \code{dat_list}. This variable in colData
 #' should be a logical vector of whic samples are a intra-batch replicate
 #' @param hOrder A vector of batch names from names of list \code{dat_list}.
-#' @param negCtl A vector of row IDs for selection of stable matbolites to be
+#' @param negCtl A vector of row IDs for selection of stable metabolites to be
 #' used as negative control in RUV.
 #' @param newAssay A name of the new assay for cleaned (preprocessed) data.
 #' @param balanced A type of hierarchical approach, "concatenate" or "balanced".

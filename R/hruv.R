@@ -23,7 +23,7 @@
 #' @param pCtlName A name of the variable in the colData of each
 #' SummarizedExperiment data in the \code{dat_list}. This variable in colData
 #' should be a numeric ID of which samples to use for robust smoother fitting.
-#' @param negCtl A vector of row IDs for selection of stable matbolites to be
+#' @param negCtl A vector of row IDs for selection of stable metabolites to be
 #' used as negative control in RUV.
 #' @param intra_rep A name of the variable in the colData of each
 #' SummarizedExperiment data in the \code{dat_list}. This variable in colData
@@ -41,7 +41,7 @@
 hruv = function(dat_list, assay,
     intra = c("rlm", "loess", "rlmShort", "loessShort"),
     inter = c("balanced", "concatenate"), intra_k = 5, inter_k = intra_k, pCtlName,
-    negCtl, intra_rep, inter_rep, hOrder = NULL, newAssay = NULL) {
+    negCtl = NULL, intra_rep, inter_rep, hOrder = NULL, newAssay = NULL) {
 
     # dat_list = lapply(dat_list, function(dat) {
     #     intraNorm(dat, assay = assay, method = intra, pCtl = which(dat[[pCtlName]]), rep = intra_rep, k = intra_k, negCtl = negCtl)

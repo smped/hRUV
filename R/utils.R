@@ -8,8 +8,7 @@ RUVIII <-
         m = nrow(Y)
         n = ncol(Y)
         M = replicate.matrix(M)
-        # ctl = tological(ctl, n)
-        ctl <- ctl_tological(ctl, Y) # Using the suggested function instead
+        # ctl = tological(ctl, n) ## No longer required as the initial parsing sets these as logical
         if (inputcheck) {
             if (sum(is.na(Y)) > 0)
                 warning("Y contains missing values.  This is not supported.")
@@ -56,8 +55,7 @@ RUV1 <-
             return(Y)
         m = nrow(Y)
         n = ncol(Y)
-        # ctl = tological(ctl, n)
-        ctl = ctl_tological(ctl, Y)  # Using the suggested function instead
+        # ctl = tological(ctl, n) ## No longer required as above
         if (is.numeric(eta))
             if (length(eta) == 1)
                 eta = matrix(1, n, 1)
@@ -154,28 +152,10 @@ design.matrix <-
 #         ## Here, names are used to replace values in an unnamed vector
 #         ## which leads to the named values being added to the end of the initial
 #         ## vector. This in turn leads to a logical vector of the incorrect length
-#         ## To modification in
+#         ## This will be OK for an integer vector though
 #         ctl2[ctl] = TRUE
 #         return(ctl2)
 #     }
-
-## The following replaces the above with better checks & correct objects returned
-ctl_tological <- function(ctl, Y){
-    ## Handle the NULL controls
-    if (is.null(ctl)) return(NULL)
-    int <- intersect(ctl, colnames(Y))
-    if (length(int) == 0) {
-        msg <- paste(
-            "None of the supplied negative controls were found in the data.",
-            "Proceeding without negative control IDs.",
-            sep ="\n"
-        )
-        warning(msg)
-        return(NULL)
-    }
-    colnames(Y) %in% ctl
-
-}
 
 
 residop <-
